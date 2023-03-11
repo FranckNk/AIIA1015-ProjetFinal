@@ -89,7 +89,7 @@ uint8_t getFingerprintEnroll() {
       break;
     case FINGERPRINT_NOFINGER:
       Serial.print(".");
-      delay(1000);
+      delay(100);
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       Serial.println("Communication error");
@@ -144,7 +144,7 @@ uint8_t getFingerprintEnroll() {
       break;
     case FINGERPRINT_NOFINGER:
       Serial.print(".");
-      delay(1000);
+      delay(100);
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       Serial.println("Communication error");

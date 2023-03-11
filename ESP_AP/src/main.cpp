@@ -1,116 +1,117 @@
-/*
-  Complete project details: https://RandomNerdTutorials.com/esp32-https-requests/
-  
-  Wifi secure connection example for ESP32 - Running on TLS 1.2 using mbedTLS
-  Suporting the following chipersuites:
-  "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_AES_256_CCM","TLS_DHE_RSA_WITH_AES_256_CCM","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384","TLS_DHE_RSA_WITH_AES_256_CBC_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA","TLS_DHE_RSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8","TLS_DHE_RSA_WITH_AES_256_CCM_8","TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_DHE_RSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384","TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384","TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256","TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_128_CCM","TLS_DHE_RSA_WITH_AES_128_CCM","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_RSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_RSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8","TLS_DHE_RSA_WITH_AES_128_CCM_8","TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_ECDHE_RSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_DHE_RSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA","TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA","TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA","TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA","TLS_DHE_PSK_WITH_AES_256_GCM_SHA384","TLS_DHE_PSK_WITH_AES_256_CCM","TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384","TLS_DHE_PSK_WITH_AES_256_CBC_SHA384","TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA","TLS_DHE_PSK_WITH_AES_256_CBC_SHA","TLS_DHE_PSK_WITH_CAMELLIA_256_GCM_SHA384","TLS_ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384","TLS_DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384","TLS_PSK_DHE_WITH_AES_256_CCM_8","TLS_DHE_PSK_WITH_AES_128_GCM_SHA256","TLS_DHE_PSK_WITH_AES_128_CCM","TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256","TLS_DHE_PSK_WITH_AES_128_CBC_SHA256","TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA","TLS_DHE_PSK_WITH_AES_128_CBC_SHA","TLS_DHE_PSK_WITH_CAMELLIA_128_GCM_SHA256","TLS_DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256","TLS_ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256","TLS_PSK_DHE_WITH_AES_128_CCM_8","TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA","TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA","TLS_RSA_WITH_AES_256_GCM_SHA384","TLS_RSA_WITH_AES_256_CCM","TLS_RSA_WITH_AES_256_CBC_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA","TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA","TLS_RSA_WITH_AES_256_CCM_8","TLS_RSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256","TLS_RSA_WITH_CAMELLIA_256_CBC_SHA","TLS_ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384","TLS_ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384","TLS_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384","TLS_RSA_WITH_AES_128_GCM_SHA256","TLS_RSA_WITH_AES_128_CCM","TLS_RSA_WITH_AES_128_CBC_SHA256","TLS_RSA_WITH_AES_128_CBC_SHA","TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA","TLS_RSA_WITH_AES_128_CCM_8","TLS_RSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_RSA_WITH_CAMELLIA_128_CBC_SHA","TLS_ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256","TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256","TLS_RSA_WITH_3DES_EDE_CBC_SHA","TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA","TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA","TLS_RSA_PSK_WITH_AES_256_GCM_SHA384","TLS_RSA_PSK_WITH_AES_256_CBC_SHA384","TLS_RSA_PSK_WITH_AES_256_CBC_SHA","TLS_RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384","TLS_RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384","TLS_RSA_PSK_WITH_AES_128_GCM_SHA256","TLS_RSA_PSK_WITH_AES_128_CBC_SHA256","TLS_RSA_PSK_WITH_AES_128_CBC_SHA","TLS_RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256","TLS_RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256","TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA","TLS_PSK_WITH_AES_256_GCM_SHA384","TLS_PSK_WITH_AES_256_CCM","TLS_PSK_WITH_AES_256_CBC_SHA384","TLS_PSK_WITH_AES_256_CBC_SHA","TLS_PSK_WITH_CAMELLIA_256_GCM_SHA384","TLS_PSK_WITH_CAMELLIA_256_CBC_SHA384","TLS_PSK_WITH_AES_256_CCM_8","TLS_PSK_WITH_AES_128_GCM_SHA256","TLS_PSK_WITH_AES_128_CCM","TLS_PSK_WITH_AES_128_CBC_SHA256","TLS_PSK_WITH_AES_128_CBC_SHA","TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256","TLS_PSK_WITH_CAMELLIA_128_CBC_SHA256","TLS_PSK_WITH_AES_128_CCM_8","TLS_PSK_WITH_3DES_EDE_CBC_SHA","TLS_EMPTY_RENEGOTIATION_INFO_SCSV"]
-  2017 - Evandro Copercini - Apache 2.0 License.
-*/
+/*********
+  Rui Santos
+  Complete project details at https://randomnerdtutorials.com  
+*********/
 
-#include <WiFiClientSecure.h>
+// Load Wi-Fi library
+#include <WiFi.h>
 
-const char* ssid = "UNIFI_IDO1";
-const char* password = "42Bidules!";
+// Replace with your network credentials
+const char* ssid     = "ESP32-Access-Point";
+const char* password = "123456789";
 
-const char*  server = "www.howsmyssl.com";  // Server URL
+// Set web server port number to 80
+WiFiServer server(80);
 
-// www.howsmyssl.com root certificate authority, to verify the server
-// change it to your server root CA
-// SHA1 fingerprint is broken now!
+// Variable to store the HTTP request
+String header;
 
-const char* test_root_ca= \
-"-----BEGIN CERTIFICATE-----\n" \
-  "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\n" \
-  "-----END CERTIFICATE-----\n"; 
+// Auxiliar variables to store the current output state
+String output26State = "off";
+String output27State = "off";
 
-
-// You can use x.509 client certificates if you want
-//const char* test_client_key = "";   //to verify the client
-//const char* test_client_cert = "";  //to verify the client
-
-
-WiFiClientSecure client;
+// Assign output variables to GPIO pins
+const int output26 = 26;
+const int output27 = 27;
 
 void setup() {
-  //Initialize serial and wait for port to open:
-  Serial.begin(9600);
-  delay(100);
+  Serial.begin(115200);
+  // Initialize the output variables as outputs
+  pinMode(output26, OUTPUT);
+  pinMode(output27, OUTPUT);
+  // Set outputs to LOW
+  digitalWrite(output26, LOW);
+  digitalWrite(output27, LOW);
 
-  Serial.print("Attempting to connect to SSID: ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
+  // Connect to Wi-Fi network with SSID and password
+  Serial.print("Setting AP (Access Point)…");
+  // Remove the password parameter, if you want the AP (Access Point) to be open
+  WiFi.softAP(ssid, password);
 
-  // attempt to connect to Wifi network:
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    // wait 1 second for re-trying
-    delay(1000);
-  }
-
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-
-  client.setCACert(test_root_ca);
-  //client.setCertificate(test_client_cert); // for client verification
-  //client.setPrivateKey(test_client_key);	// for client verification
-
-  Serial.println("\nStarting connection to server...");
-  if (!client.connect(server, 443))
-    Serial.println("Connection failed!");
-  else {
-    Serial.println("Connected to server!");
-    // Make a HTTP request:
-    client.println("GET https://www.howsmyssl.com/a/check HTTP/1.0");
-    client.println("Host: www.howsmyssl.com");
-    client.println("Connection: close");
-    client.println();
-
-    while (client.connected()) {
-      String line = client.readStringUntil('\n');
-      if (line == "\r") {
-        Serial.println("headers received");
-        break;
-      }
-    }
-    // if there are incoming bytes available
-    // from the server, read them and print them:
-    while (client.available()) {
-      char c = client.read();
-      Serial.write(c);
-    }
-
-    client.stop();
-  }
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+  
+  server.begin();
 }
 
-void loop() {
-  // do nothing
-}
+void loop(){
+  WiFiClient client = server.available();   // Listen for incoming clients
+
+  if (client) {                             // If a new client connects,
+    Serial.println("New Client.");          // print a message out in the serial port
+    String currentLine = "";                // make a String to hold incoming data from the client
+    while (client.connected()) {            // loop while the client's connected
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        Serial.write(c);                    // print it out the serial monitor
+        header += c;
+        if (c == '\n') {                    // if the byte is a newline character
+          // if the current line is blank, you got two newline characters in a row.
+          // that's the end of the client HTTP request, so send a response:
+          if (currentLine.length() == 0) {
+            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+            // and a content-type so the client knows what's coming, then a blank line:
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println("Connection: close");
+            client.println();
+            
+            // turns the GPIOs on and off
+            if (header.indexOf("GET /26/on") >= 0) {
+              Serial.println("GPIO 26 on");
+              output26State = "on";
+              digitalWrite(output26, HIGH);
+            } else if (header.indexOf("GET /26/off") >= 0) {
+              Serial.println("GPIO 26 off");
+              output26State = "off";
+              digitalWrite(output26, LOW);
+            } else if (header.indexOf("GET /27/on") >= 0) {
+              Serial.println("GPIO 27 on");
+              output27State = "on";
+              digitalWrite(output27, HIGH);
+            } else if (header.indexOf("GET /27/off") >= 0) {
+              Serial.println("GPIO 27 off");
+              output27State = "off";
+              digitalWrite(output27, LOW);
+            }
+            
+            // Display the HTML web page
+            client.println("<!DOCTYPE html><html>");
+            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<link rel=\"icon\" href=\"data:,\">");
+            // CSS to style the on/off buttons 
+            // Feel free to change the background-color and font-size attributes to fit your preferences
+            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+            client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+            client.println(".button2 {background-color: #555555;}</style></head>");
+            
+            // Web Page Heading
+            client.println("<body><h1>ESP32 Web Server</h1>");
+            
+            // Display current state, and ON/OFF buttons for GPIO 26  
+            client.println("<p>GPIO 26 - State " + output26State + "</p>");
+            // If the output26State is off, it displays the ON button       
+            if (output26State=="off") {
+              client.println("<p><a href=\"/26/on\"><button class=\"button\">ON</button></a></p>");
+            } else {
+              client.println("<p><a href=\"/26/off\"><button class=\"button button2\">OFF</button></a></p>");
+            } 
+               
+            // Display current state, and ON/OFF buttons for GPIO 27  
+            client.println("<p>GPIO 27 - State " + output27State + "</p>");
+            // If the output27State is off, it displays the ON button       
+            if (output27State=="off") {
+              client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
+            } el
