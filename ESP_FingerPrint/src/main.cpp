@@ -19,10 +19,7 @@ int fingerprintID = 0;
 int id;
 String IDname;
 
-int getFingerprintIDez();
-void displayMainScreen();
-uint8_t getFingerprintID();
-void displayUserGreeting(String Name);uint8_t getFingerprintEnroll();
+uint8_t getFingerprintEnroll();
 //Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 void setup()
@@ -53,16 +50,6 @@ void setup()
   Serial.print(F("Baud rate: ")); Serial.println(finger.baud_rate);
 }
 
-uint8_t readnumber(void) {
-  uint8_t num = 0;
-
-  while (num == 0) {
-    while (! Serial.available());
-    num = Serial.parseInt();
-  }
-  return num;
-}
-
 void loop()                     // run over and over again
 {
   Serial.println("Ready to enroll a fingerprint!");
@@ -74,11 +61,10 @@ void loop()                     // run over and over again
   Serial.print("Enrolling ID #");
   Serial.println(id);
 
-  while (!  getFingerprintEnroll() );
+  while (!getFingerprintEnroll());
 }
 
 uint8_t getFingerprintEnroll() {
-
   int p = -1;
   Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
   while (p != FINGERPRINT_OK) {
@@ -219,3 +205,4 @@ uint8_t getFingerprintEnroll() {
 
   return true;
 }
+

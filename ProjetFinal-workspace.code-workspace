@@ -1,0 +1,37 @@
+{
+	"folders": [
+		{
+			"name": "ESP_FingerPrint",
+			"path": "ESP_FingerPrint"
+		},
+		{
+			"name": "ESP32CAM_SendMQTT",
+			"path": "ESP32CAM_SendMQTT"
+		},
+		{
+			"name": "ESP32_CAM",
+			"path": "ESP32_CAM"
+		},
+		{
+			"name": "ESP32_PushButton",
+			"path": "ESP32_PushButton"
+		},
+		{
+			"name": "ESP_MQTT_FingerPrint",
+			"path": "ESP_MQTT_FingerPrint"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"string": "cpp",
+			"array": "cpp",
+			"deque": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"string_view": "cpp",
+			"initializer_list": "cpp",
+			"regex": "cpp"
+		}
+	}
+}
