@@ -156,7 +156,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println(data);
   MakeAction(data);
-
 }
 
 void MakeAction(String data){

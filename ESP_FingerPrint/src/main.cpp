@@ -24,7 +24,6 @@ void setup()
   delay(100);
   pinMode(pinButton, INPUT);
   Serial.println("\n\nAdafruit Fingerprint sensor enrollment");
-
   // set the data rate for the sensor serial port
   finger.begin(57600);
 
