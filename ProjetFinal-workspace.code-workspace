@@ -19,6 +19,14 @@
 		{
 			"name": "ESP_MQTT_FingerPrint",
 			"path": "ESP_MQTT_FingerPrint"
+		},
+		{
+			"name": "ESP_SPIFFS",
+			"path": "../../Git/IdOProgramming/PlatformIO/Projects2/ESP_SPIFFS"
+		},
+		{
+			"name": "ESP_PIR",
+			"path": "ESP_PIR"
 		}
 	],
 	"settings": {

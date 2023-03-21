@@ -7,7 +7,7 @@
 #include <WiFi.h>
 
 // Replace with your network credentials
-const char* ssid     = "ESP32-Access-Point";
+const char* ssid     = "ESP32-Access-Point-Franck";
 const char* password = "123456789";
 
 // Set web server port number to 80
@@ -114,4 +114,4 @@ void loop(){
             // If the output27State is off, it displays the ON button       
             if (output27State=="off") {
               client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
-            } el
+            } 

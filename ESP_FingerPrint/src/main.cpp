@@ -5,28 +5,24 @@
 
 
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-
+#include <Arduino.h>
 #include <Adafruit_Fingerprint.h>
 #include <HardwareSerial.h>
  
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
 
-int fingerprintID = 0;
-int id;
-String IDname;
+int pinButton = 23;
 
 uint8_t getFingerprintEnroll();
 //Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
+int getFingerprintIDez();
 
 void setup()
 {
   Serial.begin(9600);
   while (!Serial);  // For Yun/Leo/Micro/Zero/...
   delay(100);
+  pinMode(pinButton, INPUT);
   Serial.println("\n\nAdafruit Fingerprint sensor enrollment");
 
   // set the data rate for the sensor serial port
@@ -38,7 +34,6 @@ void setup()
     Serial.println("Did not find fingerprint sensor :(");
     while (1) { delay(1); }
   }
-  finger.emptyDatabase();
   Serial.println(F("Reading sensor parameters"));
   finger.getParameters();
   Serial.print(F("Status: 0x")); Serial.println(finger.status_reg, HEX);
@@ -48,25 +43,49 @@ void setup()
   Serial.print(F("Device address: ")); Serial.println(finger.device_addr, HEX);
   Serial.print(F("Packet len: ")); Serial.println(finger.packet_len);
   Serial.print(F("Baud rate: ")); Serial.println(finger.baud_rate);
+
+  Serial.println("\nPour ajouter une empreinte, appuyez sur le bouton...\n");
 }
 
 void loop()                     // run over and over again
 {
-  Serial.println("Ready to enroll a fingerprint!");
-  Serial.println("Please type in the ID # (from 1 to 127) you want to save this finger as...");
-  id = 1;
-  if (id == 0) {// ID #0 not allowed, try again!
-     return;
+  int value = digitalRead(pinButton);
+  int id = getFingerprintIDez();
+  if (value) {
+    while (!getFingerprintEnroll());
   }
-  Serial.print("Enrolling ID #");
-  Serial.println(id);
+  if (id != -1)
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+      Serial.print("Found ID #"); Serial.print(finger.fingerID);
+      Serial.print(" with confidence of "); Serial.println(finger.confidence);
+      delay(100);
+      digitalWrite(LED_BUILTIN, LOW);
+    }  
+}
 
-  while (!getFingerprintEnroll());
+int getFingerprintIDez() {
+  //Serial.println("\n\nAdafruit Fingerprint sensor enrollment");
+  // set the data rate for the sensor serial port
+  
+  //Serial.println("Waiting for valid finger...");
+  uint8_t p = finger.getImage();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.fingerFastSearch();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  // found a match!
+  return finger.fingerID;
 }
 
 uint8_t getFingerprintEnroll() {
   int p = -1;
-  Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
+  Serial.println("Ready to enroll a fingerprint!");
+  Serial.print("Waiting for valid finger to enroll..."); 
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
     switch (p) {
@@ -119,7 +138,6 @@ uint8_t getFingerprintEnroll() {
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
   }
-  Serial.print("ID "); Serial.println(id);
   p = -1;
   Serial.println("Place same finger again");
   while (p != FINGERPRINT_OK) {
@@ -169,7 +187,7 @@ uint8_t getFingerprintEnroll() {
   }
 
   // OK converted!
-  Serial.print("Creating model for #");  Serial.println(id);
+  Serial.print("Creating model..");
 
   p = finger.createModel();
   if (p == FINGERPRINT_OK) {
@@ -185,8 +203,7 @@ uint8_t getFingerprintEnroll() {
     return p;
   }
 
-  Serial.print("ID "); Serial.println(id);
-  p = finger.storeModel(id);
+  p = finger.storeModel(2);
   if (p == FINGERPRINT_OK) {
     Serial.println("Stored!");
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
