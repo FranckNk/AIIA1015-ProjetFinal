@@ -32,12 +32,14 @@ void Doorbell::closeDoor()
     DoorState = false;
     digitalWrite(pinDoor, HIGH);
 }
-void Doorbell::TimetoClose()
+bool Doorbell::TimetoClose()
 {
-    if ((millis() - timerStart) > timerTarget){
+    if ((millis() - timerStart) > timerTarget && DoorState){
         digitalWrite(pinDoor, HIGH); 
         DoorState = false;
+        return true;
     } 
+    return false;
 }
 
 

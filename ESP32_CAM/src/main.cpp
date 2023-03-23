@@ -11,9 +11,8 @@ VERSION        : 0.0.1
 
 #include <Arduino.h>
 
-#include "esp_camera.h"
 #include <WiFi.h>
-#include <PubSubClient.h>
+#include "esp_camera.h"
 #include "esp_timer.h"
 #include "img_converters.h"
 #include "fb_gfx.h"
@@ -23,11 +22,8 @@ VERSION        : 0.0.1
 #include "Timer.h"
 
 //Replace with your network credentialsconst 
-char* ssid = "MSI";
-const char* password = "12345678";
-const char* mqtt_server = "192.168.2.75";
-const char* mqtt_username = "ubuntu";
-const char* mqtt_password = "ubuntu";
+const char* ssid = "UNIFI_IDO1";
+const char* password = "42Bidules!";
 
 typedef struct {
         httpd_req_t *req;
@@ -213,14 +209,21 @@ void startCameraServer(){
 
 Timer temps;
 WiFiClient espClient;
-PubSubClient client(espClient);
+//IPAddress localIP;
+IPAddress localIP(192, 168, 1, 150); // hardcoded
+
+// Set your Gateway IP address
+IPAddress localGateway(192, 168, 1, 1);
+//IPAddress localGateway(192, 168, 1, 1); //hardcoded
+IPAddress subnet(255, 255, 255, 0);
 void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();
 
 void setup() {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
  
   Serial.begin(9600);
+
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.setDebugOutput(false);
   
   camera_config_t config;
@@ -264,8 +267,12 @@ void setup() {
   
   // Wi-Fi connection.
   Serial.println("Connexion au réseau WiFi ");
-
-  
+  Serial.println(ssid);
+/*
+  if (!WiFi.config(localIP, localGateway, subnet)){
+    Serial.println("STA Failed to configure");
+  }
+  */
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -277,21 +284,6 @@ void setup() {
   Serial.println("Camera Stream Ready! Go to: http://");
   Serial.println(WiFi.localIP());
   
-  
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
-
-  Serial.println("Connexion au broker MQTT...");
-  while (!client.connected()) {
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password )) {
-      Serial.println("Connecté au broker MQTT");
-      
-    } else {
-      Serial.println("Échec de connexion au broker MQTT, code erreur = ");
-      Serial.println(client.state());
-      delay(2000);
-    }
-  }
   temps.startTimer(10000);
   
   // Start streaming web server
@@ -299,42 +291,9 @@ void setup() {
 }
 
 void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
   if (temps.isTimerReady())
   {
-  Serial.println("loop");
-    client.publish("test", "Hello from ESP32, loop");
-    Serial.println("Hello from ESP32, loop");
-    client.subscribe("test/state");
+    Serial.println("loop");
     temps.startTimer(10000);
-  }
-  client.loop();
-}
-
-
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.println("Message reçu [");
-  for (int i = 0; i < length; i++) {
-    Serial.println((char)payload[i]);
-  }
-  Serial.println("] ");
-  
-  
-}
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.println("Tentative de reconnexion au broker MQTT...");
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password )) {
-      Serial.println("Connecté");
-      client.subscribe("test");
-      client.publish("test/state", "Hello from ESP32, reconnect");
-    } else {
-      Serial.println("Échec de connexion au broker MQTT, code erreur = ");
-      Serial.println(client.state());
-      
-    }
   }
 }

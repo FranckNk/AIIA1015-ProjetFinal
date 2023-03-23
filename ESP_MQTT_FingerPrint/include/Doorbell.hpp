@@ -18,12 +18,13 @@ private:
     int pinDoor;
     unsigned long timerStart  = 0;
     unsigned long timerTarget = 5000;
+    bool songAlert = false;
 
 public:
     Doorbell(int pin, bool State);
     bool isDoorOpen();
     void openDoor();
-    void TimetoClose();
+    bool TimetoClose();
     void closeDoor();
 
 };

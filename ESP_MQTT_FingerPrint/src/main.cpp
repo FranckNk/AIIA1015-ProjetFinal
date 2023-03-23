@@ -17,14 +17,17 @@ VERSION        : 0.0.1
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include "ledRGB.hpp"
 
 //Wifi credentials
 //const char* ssid = "FibreOP532";
-const char* ssid = "MSI";
+//const char* ssid = "MSI";
 //const char* password = "9PXPE66PM6XM55M8";
-const char* password = "12345678";
+//const char* password = "12345678";
 // MQTT credentials
-//const char* mqtt_server = "192.168.2.75";
+const char* ssid = "UNIFI_IDO1";
+const char* password = "42Bidules!";
+// const char* mqtt_server = "192.168.2.75";
 const char* mqtt_server = "192.168.1.23";
 const char* mqtt_username = "ubuntu";
 const char* mqtt_password = "ubuntu";
@@ -33,10 +36,11 @@ const char* topic1 = "state/finger";
 const char* topic2 = "state/motion";
 const char* topic3 = "state/ring";
 const char* topic4 = "state/door";
+const char* topic5 = "value/motion";
+const char* topic6 = "update/features";
 
 //IPAddress localIP;
 IPAddress localIP(192, 168, 137, 200); // hardcoded
-
 // Set your Gateway IP address
 IPAddress localGateway(192, 168, 137, 1);
 //IPAddress localGateway(192, 168, 1, 1); //hardcoded
@@ -45,6 +49,9 @@ IPAddress subnet(255, 255, 255, 0);
 
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
 Timer temps;
+Timer tempsMotion;
+Timer tempsRing;
+LedRGB led(32, 25, 33);
 Doorbell bell = Doorbell(2, false);
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -57,7 +64,18 @@ uint8_t getFingerprintEnroll();
 int getFingerprintIDez();
 void Clearfingers();
 void MakeAction(String data);
-int PinLED = 4;
+void WifiConnect();
+
+const int channel = 0;
+const int freq = 100; // fréquence de la tonalité en Hz
+const int resolution = 8; // résolution en bits du signal PWM
+int motionPIN = 23;               // choose the input pin (for PIR sensor)
+int pirState = HIGH;             // we start, assuming no motion's not detected
+int inputSonette = 19;       // pin that get if someone ring the bell. Used for making noise buzzer
+int pinBuzzer = 26;
+bool makeBuzzerNoise = true;  // Start with noise buzzer
+short int delayEvent = 1000;
+//int pinLED = 4;
 
 // function for oppening the door and update database via mqtt on nodeRed
 // void openDoor(); activate relay
@@ -65,25 +83,16 @@ int PinLED = 4;
 void setup() {
   Serial.begin(9600);
   delay(100);
-  pinMode(PinLED, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
+  pinMode(inputSonette, INPUT);
+  //pinMode(pinLED, OUTPUT);
+  pinMode(motionPIN, INPUT);
+  // Configurer le canal LEDC 0 avec la fréquence de base de 5 kHz et la résolution de 8 bits
+  ledcSetup(channel, freq, resolution);
+  // Associer le canal LEDC 0 à la broche GPIO 2
+  ledcAttachPin(pinBuzzer, channel);
 
-  Serial.print("Connexion au réseau WiFi ");
-  Serial.println(ssid);
-  if (!WiFi.config(localIP, localGateway, subnet)){
-    Serial.println("STA Failed to configure");
-  }
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connecté");
-  Serial.println("Adresse IP : ");
-  Serial.println(WiFi.localIP());
-  Serial.println("Gateway IP : ");
-  Serial.println(WiFi.gatewayIP());
-
+  WifiConnect();
   MQTTConnect();
   finger.begin(57600);
 
@@ -101,28 +110,100 @@ void setup() {
       Serial.print("Sensor contains "); Serial.print(finger.templateCount); Serial.println(" templates");
   }
   temps.startTimer(100);
+  tempsMotion.startTimer(delayEvent);
+  tempsRing.startTimer(delayEvent);
+  led.setGreen();
 }
 
 void loop() {
-  bell.TimetoClose();
+  // Vérification s'il est temps d'ouvrir la porte. 
+  if (bell.TimetoClose() && !bell.isDoorOpen())
+  {
+    client.publish(topic6,"door_off");
+    led.setRed();
 
+  }
+  
   if (temps.isTimerReady())
   {
     int id = getFingerprintIDez();
     if (id != -1)
     {
       bell.openDoor();
-      digitalWrite(PinLED, HIGH);
+      led.setGreen();
+      client.publish(topic6,"door_on");
       Serial.print("Found ID #"); Serial.print(finger.fingerID);
       Serial.print(" with confidence of "); Serial.println(finger.confidence);
-      delay(100);
-      digitalWrite(PinLED, LOW);
-
     }
     temps.startTimer(100);
   }
+
+  // Générer une tonalité de 1 kHz pendant 1 seconde
+  int val = digitalRead(inputSonette);
+  int stateMotion = digitalRead(motionPIN);
+
+  // if we can make noise buzzer
+  if(val == HIGH && makeBuzzerNoise){
+    if(tempsRing.isTimerReady()){
+      client.publish(topic5,"ring");
+      tempsRing.startTimer(delayEvent);
+      // send state to mqtt
+    }
+    ledcWriteTone(channel, freq); 
+    delay(50);
+  }
+  else{
+    ledcWrite(channel, 0);
+  }
   
+  if(stateMotion == HIGH){
+    // Motion detected
+    //digitalWrite(pinLED, HIGH);
+    if (pirState == LOW) 
+	  {
+      Serial.println("Motion detected!");	// print on output change
+      client.publish(topic5,"motion");
+      led.setBlue();
+      pirState = HIGH;
+    }
+    if(tempsMotion.isTimerReady()){
+      tempsMotion.startTimer(delayEvent);
+      // send state to mqtt
+    }
+  }else if (stateMotion == LOW){
+    // motion finished
+    //digitalWrite(pinLED, LOW);
+    if (pirState == HIGH)
+	  {
+      Serial.println("Motion ended!");	// print on output change
+      led.setRed();
+      pirState = LOW;
+    }
+  }
+
   client.loop();
+}
+
+void WifiConnect(){
+  Serial.print("Connexion au réseau WiFi ");
+  Serial.println(ssid);
+  /* configure ESP to get static IP
+  if (!WiFi.config(localIP, localGateway, subnet)){
+    Serial.println("STA Failed to configure");
+  }
+  */
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connecté");
+  Serial.println("Adresse IP : ");
+  Serial.println(WiFi.localIP());
+  Serial.println("Gateway IP : ");
+  Serial.println(WiFi.gatewayIP());
+
 }
 
 void MQTTConnect(){
@@ -138,9 +219,12 @@ void MQTTConnect(){
       delay(2000);
     }
   }
-  //client.publish("update/features","door_on");
-  //client.publish("update/features","motion_off");
-  //client.publish("update/features","ring_off");
+  // Reinitialise all features bcs the device restarted
+  client.publish(topic6,"start");
+  client.publish(topic6,"door_off");
+  client.publish(topic6,"motion_off");
+  client.publish(topic6,"ring_on"); // Start with noise buzzer song on the device
+  client.publish(topic6,"email_off");
   client.subscribe(topic1);    
   client.subscribe(topic3);    
   client.subscribe(topic4);
@@ -170,15 +254,20 @@ void MakeAction(String data){
   }
   if(data == "door_on"){
     bell.openDoor();
+    led.setGreen();
   }
   if(data == "door_off"){
     bell.closeDoor();
+    led.setRed();
+  }
+  if(data == "ring_on"){
+    makeBuzzerNoise = true;
+  }
+  if(data == "ring_off"){
+    makeBuzzerNoise = false;
   }
 }
 
-void openDoor(){
-
-}
 
 void reconnect() {
   while (!client.connected()) {
