@@ -28,9 +28,9 @@ VERSION        : 0.0.1
 const char* ssid = "UNIFI_IDO1";
 const char* password = "42Bidules!";
 // const char* mqtt_server = "192.168.2.75";
-const char* mqtt_server = "192.168.1.23";
-const char* mqtt_username = "ubuntu";
-const char* mqtt_password = "ubuntu";
+const char* mqtt_server = "192.168.2.23";
+const char* mqtt_username = "openhabian";
+const char* mqtt_password = "openhabian";
 
 const char* topic1 = "state/finger";
 const char* topic2 = "state/motion";
