@@ -31,6 +31,9 @@
 		{
 			"name": "ESP32_CAM_MQTT_Finger_PIR",
 			"path": "ESP32_CAM_MQTT_Finger_PIR"
+		},
+		{
+			"path": "../../Git/IdOProgramming/PlatformIO/Projects/TestingOLED"
 		}
 	],
 	"settings": {
