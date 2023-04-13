@@ -79,7 +79,7 @@ int pirState = HIGH;             // we start, assuming no motion's not detected
 int inputSonette = 19;       // pin that get if someone ring the bell. Used for making noise buzzer
 int pinBuzzer = 26;
 bool makeBuzzerNoise = true;  // Start with noise buzzer
-short int delayEvent = 1000;
+short int delayEvent = 2000;
 //int pinLED = 4;
 
 // function for oppening the door and update database via mqtt on nodeRed
@@ -142,8 +142,9 @@ void loop() {
       bell.openDoor();
       led.setGreen();
       client.publish(topic6,"door_on");
-      Serial.print("Found ID #"); Serial.print(finger.fingerID);
-      Serial.print(" with confidence of "); Serial.println(finger.confidence);
+      maOLED.PrintMessage("Door opened", 2000);
+      //Serial.print("Found ID #"); Serial.print(finger.fingerID);
+      //Serial.print(" with confidence of "); Serial.println(finger.confidence);
     }
     temps.startTimer(100);
   }
@@ -194,37 +195,37 @@ void loop() {
 }
 
 void WifiConnect(){
-  Serial.print("Connexion au réseau WiFi ");
-  Serial.println(ssid);
+  maOLED.PrintMessage("Connexion au réseau WiFi ",2000);
+  //maOLED.PrintMessage(ssid, 2000);
   //configure ESP to get static IP
   if (!WiFi.config(localIP, localGateway, subnet)){
-    Serial.println("STA Failed to configure");
+    maOLED.PrintMessage("STA Failed to configure", 2000);
   }
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.print(".");
+    delay(2000);
+    //maOLED.PrintMessage(".", 2000);
   }
-  Serial.println("");
-  Serial.println("WiFi connecté");
-  Serial.println("Adresse IP : ");
-  Serial.println(WiFi.localIP());
-  Serial.println("Gateway IP : ");
-  Serial.println(WiFi.gatewayIP());
+  //maOLED.PrintMessage("", 2000);
+  maOLED.PrintMessage("WiFi connecté..", 2000);
+  //maOLED.PrintMessage("Adresse IP : ");
+  //maOLED.PrintMessage(WiFi.localIP());
+  //maOLED.PrintMessage("Gateway IP : ");
+  //maOLED.PrintMessage(WiFi.gatewayIP());
 
 }
 
 void MQTTConnect(){
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-  Serial.println("Connexion au broker MQTT...");
+  maOLED.PrintMessage("broker MQTT...", 2000);
   while (!client.connected()) {
     if (client.connect("ESP32Client", mqtt_username, mqtt_password )) {
-      Serial.println("Connecté au broker MQTT");
+      maOLED.PrintMessage("Connecté au broker MQTT", 5000);
     } else {
-      Serial.print("Échec de connexion au broker MQTT, code erreur = ");
-      Serial.print(client.state());
+      maOLED.PrintMessage("Failed broker MQTT..", 2000);
+      //Serial.print(client.state());
       delay(2000);
     }
   }
@@ -311,7 +312,7 @@ uint8_t getFingerprintEnroll() {
   
   Timer pause;
   int time = 100;
-  Serial.println("\n\nAdafruit Fingerprint sensor enrollment");
+  maOLED.PrintMessage("\nEnrollment...", 2000);
   // set the data rate for the sensor serial port
   
   //Serial.println(F("Reading sensor parameters"));
@@ -320,7 +321,8 @@ uint8_t getFingerprintEnroll() {
   randomSeed(analogRead(0)); 
   int id = random(100);
   int p = -1;
-  Serial.print("Waiting for valid finger to enroll as #"); 
+  maOLED.PrintMessage("\nEnrollment...\nPut your finger", 2000);
+  //Serial.print("Waiting for valid finger to enroll as #"); 
   Serial.println(id);
   pause.startTimer(100);
   while (p != FINGERPRINT_OK) {
@@ -328,20 +330,20 @@ uint8_t getFingerprintEnroll() {
     if(pause.isTimerReady()){
       switch (p) {
       case FINGERPRINT_OK:
-        Serial.println("Image taken");
+        //Serial.println("Image taken");
         break;
       case FINGERPRINT_NOFINGER:
-        Serial.print(".");
+        //Serial.print(".");
         delay(100);
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
-        Serial.println("Communication error");
+        //Serial.println("Communication error");
         break;
       case FINGERPRINT_IMAGEFAIL:
-        Serial.println("Imaging error");
+        //Serial.println("Imaging error");
         break;
       default:
-        Serial.println("Unknown error");
+        //Serial.println("Unknown error");
         break;
       }
       pause.startTimer(time);
@@ -353,54 +355,55 @@ uint8_t getFingerprintEnroll() {
 
   switch (p) {
     case FINGERPRINT_OK:
-      Serial.println("Image converted");
+     // Serial.println("Image converted");
       break;
     case FINGERPRINT_IMAGEMESS:
-      Serial.println("Image too messy");
+      //Serial.println("Image too messy");
       return p;
     case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("Communication error");
+     // Serial.println("Communication error");
       return p;
     case FINGERPRINT_FEATUREFAIL:
-      Serial.println("Could not find fingerprint features");
+      //Serial.println("Could not find fingerprint features");
       return p;
     case FINGERPRINT_INVALIDIMAGE:
-      Serial.println("Could not find fingerprint features");
+     // Serial.println("Could not find fingerprint features");
       return p;
     default:
-      Serial.println("Unknown error");
+      //Serial.println("Unknown error");
       return p;
   }
 
-  Serial.println("Remove finger");
+  //Serial.println("Remove finger");
+  maOLED.PrintMessage("Remove Finger and replace same finger...", 2000);
   delay(2000);
   p = 0;
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
   }
-  Serial.print("ID "); Serial.println(id);
+  //Serial.print("ID "); Serial.println(id);
   p = -1;
-  Serial.println("Place same finger again");
+  //Serial.println("Place same finger again");
   pause.startTimer(100);
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
     if(pause.isTimerReady()){
       switch (p) {
       case FINGERPRINT_OK:
-        Serial.println("Image taken");
+        //Serial.println("Image taken");
         break;
       case FINGERPRINT_NOFINGER:
-        Serial.print(".");
+        //Serial.print(".");
         delay(100);
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
-        Serial.println("Communication error");
+        //Serial.println("Communication error");
         break;
       case FINGERPRINT_IMAGEFAIL:
-        Serial.println("Imaging error");
+        //Serial.println("Imaging error");
         break;
       default:
-        Serial.println("Unknown error");
+        //Serial.println("Unknown error");
         break;
       }
       pause.startTimer(time);
@@ -412,57 +415,59 @@ uint8_t getFingerprintEnroll() {
   p = finger.image2Tz(2);
   switch (p) {
     case FINGERPRINT_OK:
-      Serial.println("Image converted");
+      //Serial.println("Image converted");
       break;
     case FINGERPRINT_IMAGEMESS:
-      Serial.println("Image too messy");
+      //Serial.println("Image too messy");
       return p;
     case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("Communication error");
+      //Serial.println("Communication error");
       return true;
     case FINGERPRINT_FEATUREFAIL:
-      Serial.println("Could not find fingerprint features");
+      //Serial.println("Could not find fingerprint features");
       return true;
     case FINGERPRINT_INVALIDIMAGE:
-      Serial.println("Could not find fingerprint features");
+      //Serial.println("Could not find fingerprint features");
       return true;
     default:
-      Serial.println("Unknown error");
+      //Serial.println("Unknown error");
       return true;
   }
 
   // OK converted!
-  Serial.print("Creating model for #");  Serial.println(id);
+  //Serial.print("Creating model for #");  Serial.println(id);
 
   p = finger.createModel();
   if (p == FINGERPRINT_OK) {
-    Serial.println("Prints matched!");
+    //Serial.println("Prints matched!");
+    maOLED.PrintMessage("Prints matched!..", 2000);
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    Serial.println("Communication error");
+    //Serial.println("Communication error");
     return p;
   } else if (p == FINGERPRINT_ENROLLMISMATCH) {
-    Serial.println("Fingerprints did not match");
+    maOLED.PrintMessage("Prints didnt matched!..", 2000);
+    //Serial.println("Fingerprints did not match");
     return p;
   } else {
-    Serial.println("Unknown error");
+    //Serial.println("Unknown error");
     return p;
   }
 
-  Serial.print("ID "); Serial.println(id);
+  //Serial.print("ID "); Serial.println(id);
   p = finger.storeModel(id);
   if (p == FINGERPRINT_OK) {
-    Serial.println("Stored!");
+   // Serial.println("Stored!");
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
     client.publish("enroll","Communication error");
     return true;
   } else if (p == FINGERPRINT_BADLOCATION) {
-    Serial.println("Could not store in that location");
+    //Serial.println("Could not store in that location");
     return p;
   } else if (p == FINGERPRINT_FLASHERR) {
-    Serial.println("Error writing to flash");
+    //Serial.println("Error writing to flash");
     return p;
   } else {
-    Serial.println("Unknown error");
+    //Serial.println("Unknown error");
     return p;
   }
   client.publish("enroll", "Enrollement terminé");

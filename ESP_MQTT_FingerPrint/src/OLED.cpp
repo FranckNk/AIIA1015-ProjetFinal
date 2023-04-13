@@ -19,9 +19,9 @@ void OLED::PrintMessage(String chaine, int time){
 	display.setTextColor(INVERSE);
 	display.setCursor(0, 0);
 	// Display static text
-	display.println("Doorbell");
+	display.println("DOORBELL");
 	display.setTextSize(1);
-	display.setCursor(0, 16);
+	display.setCursor(0, 18);
 	display.println(chaine);
 	display.display(); 
 }
@@ -46,7 +46,7 @@ void OLED::ClearOLED()
 	// Display static text
 	display.println("DOORBELL");
 	display.setTextSize(2);
-	display.setCursor(0, 17);
-	display.println("En Marche");
+	display.setCursor(0, 19);
+	display.println("En Marche...");
 	display.display(); 
 }
