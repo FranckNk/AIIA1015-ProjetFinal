@@ -1,4 +1,15 @@
 
+/*
+
+TITRE          : Classe OLED - partie code source
+AUTEUR         : Franck Nkeubou Awougang
+DATE           : 13/04/2023
+DESCRIPTION    : Classe pour gérer l'affichage d'un message sur l'écran OLED en utilisant un temps d'affichage
+VERSION        : 0.0.1
+
+*/
+
+
  #include "OLED.hpp"
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);

@@ -8,11 +8,8 @@ VERSION        : 0.0.1
 
 */
 
-
-
 #include "Doorbell.hpp"
 #include "Timer.h"
-#include <Wire.h>
 #include <Adafruit_Fingerprint.h>
 #include <HardwareSerial.h>
 #include <WiFi.h>
@@ -25,15 +22,17 @@ VERSION        : 0.0.1
 const char* ssid = "MSI";
 //const char* password = "9PXPE66PM6XM55M8";
 const char* password = "12345678";
-// MQTT credentials
 //const char* ssid = "UNIFI_IDO1";
 //const char* password = "42Bidules!";
+
+// MQTT credentials
 const char* mqtt_server = "192.168.137.100";
 //const char* mqtt_server = "192.168.2.75";
 //const char* mqtt_server = "192.168.2.23";
 const char* mqtt_username = "openhabian";
 const char* mqtt_password = "openhabian";
 
+// Topics crédentials
 const char* topic1 = "state/finger";
 //const char* topic2 = "state/motion";
 const char* topic3 = "state/ring";
@@ -42,14 +41,14 @@ const char* topic5 = "value/motion";
 const char* topic6 = "update/features";
 const char* topic7 = "fingers/number";
 
-//IPAddress localIP;
-IPAddress localIP(192, 168, 137, 200); // hardcoded
+//IPAddress localIP fixed;
+IPAddress localIP(192, 168, 137, 200); // IP Address déclarées de manière statique
 // Set your Gateway IP address
 IPAddress localGateway(192, 168, 137, 1);
-//IPAddress localGateway(192, 168, 1, 1); //hardcoded
+//IPAddress localGateway(192, 168, 1, 1); //IP Address déclarées de manière statique
 IPAddress subnet(255, 255, 255, 0);
 
-
+// Déclaration des variables
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
 Timer temps;
 Timer tempsMotion;
@@ -61,17 +60,16 @@ PubSubClient client(espClient);
 OLED maOLED = OLED();
 
 
-// functions declarations
+// Functions declarations
 void callback(char* topic, byte* payload, unsigned int length);
-void reconnect();
 void MQTTConnect();
 uint8_t getFingerprintEnroll();
 int getFingerprintIDez();
 void Clearfingers();
 void MakeAction(String data);
-void WifiConnect();
+void WifiConnect(bool dhcpaddress);
 
-const int channel = 0;
+const int channel = 0; // variable pour utilisation du buzzer
 const int freq = 100; // fréquence de la tonalité en Hz
 const int resolution = 8; // résolution en bits du signal PWM
 int motionPIN = 23;               // choose the input pin (for PIR sensor)
@@ -79,28 +77,38 @@ int pirState = HIGH;             // we start, assuming no motion's not detected
 int inputSonette = 19;       // pin that get if someone ring the bell. Used for making noise buzzer
 int pinBuzzer = 26;
 bool makeBuzzerNoise = true;  // Start with noise buzzer
-short int delayEvent = 2000;
+short int delayEvent = 2000; // Délai entre les évènements
 //int pinLED = 4;
 
 // function for oppening the door and update database via mqtt on nodeRed
 // void openDoor(); activate relay
 
 void setup() {
-  Serial.begin(9600);
+
+  //Serial.begin(9600); // Start serial monitor
   delay(100);
+
+  
+  //Configuration des broches nécessaires
   pinMode(pinBuzzer, OUTPUT);
   pinMode(inputSonette, INPUT);
-  //pinMode(pinLED, OUTPUT);
   pinMode(motionPIN, INPUT);
+
   // Configurer le canal LEDC 0 avec la fréquence de base de 5 kHz et la résolution de 8 bits
   ledcSetup(channel, freq, resolution);
+
   // Associer le canal LEDC 0 à la broche GPIO 2
   ledcAttachPin(pinBuzzer, channel);
-	maOLED.Init();
-	maOLED.PrintMessage("Bonjour Tout le monde", 3000); 
 
-  WifiConnect();
+  led.setColor(241, 238, 0); // set color yellow to indicate that we are trying to connect to wifi and mqtt
+
+	maOLED.Init();
+	maOLED.PrintMessage("Welcome !", 3000); 
+
+  WifiConnect(false);
   MQTTConnect();
+
+  // Initialise finger print sensor
   finger.begin(57600);
   if (finger.verifyPassword()) {
     //Serial.println("Found fingerprint sensor!");
@@ -110,18 +118,19 @@ void setup() {
   finger.getTemplateCount();
 
   if (finger.templateCount == 0) {
+    // Mise à jour du nombre d'empreintes sur le dashboard
+    client.publish(topic7,String(finger.templateCount).c_str());
     client.publish("enroll","Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");
   }
   else {
-    //Serial.print("Sensor contains "); Serial.print(finger.templateCount); Serial.println(" templates");
+    // Mise à jour du nombre d'empreintes sur le dashboard
     client.publish(topic7,String(finger.templateCount).c_str());
   }
-  // Mise à jour du nombre d'empreintes sur le dashboard
 
-  temps.startTimer(100);
+  temps.startTimer(100); // delay for making any action in the loop. 
   tempsMotion.startTimer(delayEvent);
   tempsRing.startTimer(delayEvent);
-  led.setGreen();
+  led.setGreen(); // Say evreting is okay at this state
 }
 
 
@@ -134,7 +143,7 @@ void loop() {
     led.setRed();
   }
   
-  if (temps.isTimerReady())
+  if (temps.isTimerReady()) // if we can make action
   {
     int id = getFingerprintIDez();
     if (id != -1)
@@ -143,8 +152,6 @@ void loop() {
       led.setGreen();
       client.publish(topic6,"door_on");
       maOLED.PrintMessage("Door opened", 2000);
-      //Serial.print("Found ID #"); Serial.print(finger.fingerID);
-      //Serial.print(" with confidence of "); Serial.println(finger.confidence);
     }
     temps.startTimer(100);
   }
@@ -166,27 +173,26 @@ void loop() {
   else{
     ledcWrite(channel, 0);
   }
-  
+  // If motion is detected
   if(stateMotion == HIGH){
     // Motion detected
     //digitalWrite(pinLED, HIGH);
     if (pirState == LOW) 
 	  {
-      //Serial.println("Motion detected!");	// print on output change
       client.publish(topic5,"motion");
       led.setBlue();
       pirState = HIGH;
     }
+    /*
     if(tempsMotion.isTimerReady()){
       tempsMotion.startTimer(delayEvent);
       // send state to mqtt
     }
+    */
   }else if (stateMotion == LOW){
     // motion finished
-    //digitalWrite(pinLED, LOW);
     if (pirState == HIGH)
 	  {
-      //Serial.println("Motion ended!");	// print on output change
       led.setRed();
       pirState = LOW;
     }
@@ -194,28 +200,34 @@ void loop() {
   client.loop();
 }
 
-void WifiConnect(){
+/**
+ * @brief Fonction pour se connecter au wifi local en utilisant les crédentials ssid, et password
+ * 
+ * @param dhcpaddress boolean to set (true) if we use static ip or (false) for dynamic ip address
+ */
+void WifiConnect(bool dhcpaddress){
   maOLED.PrintMessage("Connexion au réseau WiFi ",2000);
-  //maOLED.PrintMessage(ssid, 2000);
-  //configure ESP to get static IP
-  if (!WiFi.config(localIP, localGateway, subnet)){
-    maOLED.PrintMessage("STA Failed to configure", 2000);
-  }
 
+  if(dhcpaddress){
+    //maOLED.PrintMessage(ssid, 2000);
+    //configure ESP to get static IP
+    if (!WiFi.config(localIP, localGateway, subnet)){
+      maOLED.PrintMessage("STA Failed to configure", 2000);
+    }
+  }
+  // connect to wifi using parameters needed
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(2000);
-    //maOLED.PrintMessage(".", 2000);
   }
-  //maOLED.PrintMessage("", 2000);
   maOLED.PrintMessage("WiFi connecté..", 2000);
-  //maOLED.PrintMessage("Adresse IP : ");
-  //maOLED.PrintMessage(WiFi.localIP());
-  //maOLED.PrintMessage("Gateway IP : ");
-  //maOLED.PrintMessage(WiFi.gatewayIP());
 
 }
 
+/**
+ * @brief Function to connect to MQTT Broker using mqtt credentials
+ * 
+ */
 void MQTTConnect(){
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -240,6 +252,13 @@ void MQTTConnect(){
   client.subscribe(topic4);
 }
 
+/**
+ * @brief Function who called when we received a mqtt message from broker after subscribed.
+ * 
+ * @param topic topic used to send message to us (this device)
+ * @param payload message content. it contents data sent from broker
+ * @param length size of message received from broker
+ */
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message reçu : ");
   String data = "";
@@ -248,24 +267,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
     data += (char)payload[i];
   }
   Serial.println(data);
+  // lets make a action depends of message received
   MakeAction(data);
 }
 
 
-
+/**
+ * @brief Fonction utilisée pour traduire le message reçu du broker mqtt.
+ * 
+ * @param data messange reçu
+ */
 void MakeAction(String data){
   if(data == "enroll") {
-    // Serial.print("\n data reçu = ");Serial.println(data); 
     while (!getFingerprintEnroll());
     finger.getTemplateCount();
     client.publish(topic7,String(finger.templateCount).c_str());
   }
   if(data == "clearfinger") {
-    //Serial.print("] \n data reçu = ");
-    //Serial.println(data); 
     finger.getTemplateCount();
     client.publish(topic7,String(finger.templateCount).c_str());
-    //PrintMessage("Empreintes effacées...");
     Clearfingers();
   }
   if(data == "door_on"){
@@ -284,21 +304,10 @@ void MakeAction(String data){
   }
 }
 
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Tentative de reconnexion au broker MQTT...");
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password )) {
-      Serial.println("Connecté");
-      client.subscribe("test");
-      //client.publish("test", "Hello from ESP32, reconnect");
-    } else {
-      Serial.print("Échec de connexion au broker MQTT, code erreur = ");
-      Serial.print(client.state());
-      
-    }
-  }
-}
-
+/**
+ * @brief function used for delete all fingerprints saved on the sensor
+ * 
+ */
 void Clearfingers(){
   
   Timer pause;
@@ -308,6 +317,11 @@ void Clearfingers(){
   //Serial.println("Empreintes supprimées avec succès...");
 }
 
+/**
+ * @brief Get the Fingerprint Enroll object
+ * 
+ * @return uint8_t 
+ */
 uint8_t getFingerprintEnroll() {
   
   Timer pause;
@@ -475,6 +489,11 @@ uint8_t getFingerprintEnroll() {
 
 }
 
+/**
+ * @brief Get the Fingerprint I Dez object
+ * 
+ * @return int 
+ */
 int getFingerprintIDez() {
   //Serial.println("\n\nAdafruit Fingerprint sensor enrollment");
   // set the data rate for the sensor serial port

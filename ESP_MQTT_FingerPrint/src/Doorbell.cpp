@@ -8,7 +8,6 @@ VERSION        : 0.0.1
 
 */
  #include "Doorbell.hpp"
-#include <Arduino.h>
 
 Doorbell::Doorbell(int pin, bool State)
 {
