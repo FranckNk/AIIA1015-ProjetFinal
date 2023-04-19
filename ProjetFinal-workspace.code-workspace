@@ -17,10 +17,6 @@
 			"path": "ESP32_PushButton"
 		},
 		{
-			"name": "ESP_MQTT_FingerPrint",
-			"path": "ESP_MQTT_FingerPrint"
-		},
-		{
 			"name": "ESP_SPIFFS",
 			"path": "../../Git/IdOProgramming/PlatformIO/Projects2/ESP_SPIFFS"
 		},
@@ -34,6 +30,9 @@
 		},
 		{
 			"path": "../../Git/IdOProgramming/PlatformIO/Projects/TestingOLED"
+		},
+		{
+			"path": "ESP32 - SmartDoorbell"
 		}
 	],
 	"settings": {

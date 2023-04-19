@@ -1,6 +1,6 @@
 /*
 
-TITRE          : Test de la communication MQTT sur NodeRED
+TITRE          : Smart doorbell code using mqtt communication to interact with NodeRED server.
 AUTEUR         : Franck Nkeubou Awougang
 DATE           : 10/03/2023
 DESCRIPTION    : Communication MQTT avec NodeRED à l'aide de Mosquitto installé sur le raspberry Pi
@@ -331,7 +331,8 @@ uint8_t getFingerprintEnroll() {
   
   //Serial.println(F("Reading sensor parameters"));
   //finger.getParameters();
-  // initialise la graine aléatoire avec une valeur différente à chaque exécution
+  // initialise la graine aléatoire avec une valeur différente à chaque exécution 
+  // bcs we need to set a id on a finger in the sensor memory
   randomSeed(analogRead(0)); 
   int id = random(100);
   int p = -1;
