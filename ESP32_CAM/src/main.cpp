@@ -20,10 +20,63 @@ VERSION        : 0.0.1
 #include "soc/rtc_cntl_reg.h"  //disable brownout problems
 #include "esp_http_server.h"
 #include "Timer.h"
+#include <PubSubClient.h>
 
 //Replace with your network credentialsconst 
-const char* ssid = "UNIFI_IDO1";
-const char* password = "42Bidules!";
+const char* ssid = "TELUSBDC8B4_2.4G";
+const char* password = "6QBR55Z682";
+//const char* ssid = "UNIFI_IDO1";
+//const char* password = "42Bidules!";
+//const char* ssid = "MSI";
+//const char* password = "9PXPE66PM6XM55M8";
+//const char* password = "12345678";
+
+// MQTT credentials
+//const char* mqtt_server = "192.168.137.100";
+//const char* mqtt_server = "192.168.2.75";
+const char* mqtt_server = "192.168.0.200";
+const char* mqtt_username = "openhabian";
+const char* mqtt_password = "openhabian";
+
+
+const char* topic1 = "state/cam";
+//const char* topic2 = "state/motion";
+const char* topic3 = "state/ring";
+const char* topic4 = "state/door";
+const char* topic5 = "value/motion";
+const char* topic6 = "update/features";
+const char* topic7 = "fingers/number";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message reçu : ");
+  String data = "";
+  for (int i = 0; i < length; i++) {
+    //Serial.print((char)payload[i]);
+    data += (char)payload[i];
+  }
+  Serial.println(data);
+  // lets make a action depends of message received
+}
+
+void MQTTConnect(){
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+  Serial.println("broker MQTT...");
+  while (!client.connected()) {
+    if (client.connect("ESP32Client", mqtt_username, mqtt_password )) {
+      Serial.println("Connecté au broker MQTT");
+    } else {
+      Serial.println("Failed broker MQTT..");
+      //Serial.print(client.state());
+      delay(2000);
+    }
+  }
+  // Reinitialise all features bcs the device restarted
+  client.publish(topic1,"start");
+}
 
 typedef struct {
         httpd_req_t *req;
@@ -208,7 +261,6 @@ void startCameraServer(){
 }
 
 Timer temps;
-WiFiClient espClient;
 //IPAddress localIP;
 IPAddress localIP(192, 168, 1, 150); // hardcoded
 
@@ -222,7 +274,6 @@ void reconnect();
 void setup() {
  
   Serial.begin(9600);
-
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.setDebugOutput(false);
   
@@ -272,7 +323,7 @@ void setup() {
   if (!WiFi.config(localIP, localGateway, subnet)){
     Serial.println("STA Failed to configure");
   }
-  */
+*/
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -280,10 +331,10 @@ void setup() {
   }
   Serial.println("");
   Serial.println("WiFi connecté");
-  
+  MQTTConnect();
   Serial.println("Camera Stream Ready! Go to: http://");
-  Serial.println(WiFi.localIP());
-  
+  Serial.println(WiFi.localIP().toString());
+  client.publish(topic1,WiFi.localIP().toString().c_str());
   temps.startTimer(10000);
   
   // Start streaming web server

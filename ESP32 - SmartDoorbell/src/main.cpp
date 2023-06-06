@@ -19,16 +19,18 @@ VERSION        : 0.0.1
 
 //Wifi credentials
 //const char* ssid = "FibreOP532";
-const char* ssid = "MSI";
+//const char* ssid = "MSI";
 //const char* password = "9PXPE66PM6XM55M8";
-const char* password = "12345678";
+//const char* password = "12345678";
 //const char* ssid = "UNIFI_IDO1";
 //const char* password = "42Bidules!";
+const char* ssid = "TELUSBDC8B4_2.4G";
+const char* password = "6QBR55Z682";
 
 // MQTT credentials
-const char* mqtt_server = "192.168.137.100";
+//const char* mqtt_server = "192.168.137.100";
 //const char* mqtt_server = "192.168.2.75";
-//const char* mqtt_server = "192.168.2.23";
+const char* mqtt_server = "192.168.0.200";
 const char* mqtt_username = "openhabian";
 const char* mqtt_password = "openhabian";
 
@@ -42,7 +44,7 @@ const char* topic6 = "update/features";
 const char* topic7 = "fingers/number";
 
 //IPAddress localIP fixed;
-IPAddress localIP(192, 168, 137, 200); // IP Address déclarées de manière statique
+IPAddress localIP(192, 168, 1, 210); // IP Address déclarées de manière statique
 // Set your Gateway IP address
 IPAddress localGateway(192, 168, 137, 1);
 //IPAddress localGateway(192, 168, 1, 1); //IP Address déclarées de manière statique
@@ -53,7 +55,7 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
 Timer temps;
 Timer tempsMotion;
 Timer tempsRing;
-LedRGB led(32, 25, 33);
+LedRGB led(32, 33, 25);
 Doorbell bell = Doorbell(2, false);
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -114,6 +116,7 @@ void setup() {
     //Serial.println("Found fingerprint sensor!");
   } else {
     client.publish("enroll","Did not find fingerprint sensor :(");
+    maOLED.PrintMessage("Did not find fingerprint sensor :(", 2000);
   }
   finger.getTemplateCount();
 
@@ -140,6 +143,7 @@ void loop() {
   if (bell.TimetoClose() && !bell.isDoorOpen())
   {
     client.publish(topic6,"door_off");
+    client.publish("enroll","Fermeture de la porte");
     led.setRed();
   }
   
@@ -151,7 +155,8 @@ void loop() {
       bell.openDoor();
       led.setGreen();
       client.publish(topic6,"door_on");
-      maOLED.PrintMessage("Door opened", 2000);
+      client.publish("enroll","Ouverture de la porte");
+      maOLED.PrintMessage("Door opened", 5000);
     }
     temps.startTimer(100);
   }
